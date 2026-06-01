@@ -1,100 +1,303 @@
-# Amazon Web Script
+# Amazon_Web_Script
 
-这是一个在 Amazon 上根据 Greeting Cards 选品的自动化脚本项目。脚本会通过 Playwright 打开浏览器，加载卖家精灵 Chrome 扩展，进入 Amazon Greeting Cards 畅销榜，筛选标题包含 `pop up` 且近 30 天子体月销量大于等于 1000 的商品，并把商品信息、ASIN、卖家精灵数据和参考图片写入 Excel 表格。
+Amazon 贺卡选品自动化脚本。项目包含两个脚本，用于从 Amazon Greeting Cards 页面采集满足条件的商品，并生成或更新 Excel 选品表格。
 
-## 脚本功能
+## 功能
 
-### 脚本一：生成新的选品表格
+- 脚本一：生成当天完整选品表格。
+- 脚本二：输入一个已有表格，只把当天新增商品追加到这个表格底部。
 
-运行 `npm start`。
+默认筛选条件：
 
-脚本会重新采集当前 Amazon Greeting Cards Top 100 中符合条件的商品，并在 `OUTPUT_ROOT` 指定的目录下生成一个新的输出文件夹。输出内容包括 Excel 表格、下载后的参考图片和运行日志。
+- 关键词 `pop up greeting card`
+- 商品标题包含 `pop up`、`popup`、`pop-up` 等类似字眼
+- 近 30 天销量（子体）`>= 1000`
+- Amazon 类目为 `Greeting Cards`
 
-### 脚本二：追加新增商品
+这些配置可以在 `.env` 中修改。
 
-运行 `npm run append-new -- --input /path/to/已有选品表格.xlsx`。
+## 一、Mac 安装
 
-脚本会读取已有 Excel 表格中的 `商品ID`，然后重新执行和脚本一相同的采集流程。每发现一个今天符合条件的商品，就会先判断它的商品 ID 是否已经存在于输入表格中；如果已经存在就跳过，如果不存在就采集完整信息并追加到原表格末尾。输入和输出是同一个 Excel 文件。
+### 1. 安装基础软件
 
-## 前置要求
+需要先安装：
 
+- Git
 - Node.js 18 或更高版本
-- Playwright Chromium
-- 可以正常访问 Amazon.com 的网络环境
-- 卖家精灵账号
-- 已解压的卖家精灵 Chrome 扩展目录
-- Excel 模板文件
+- Google Chrome，可选；默认使用 Playwright 自带的 Chromium
+- 卖家精灵 Chrome 扩展
 
-本项目主要在 macOS 上测试。Windows 理论上也可以运行，因为脚本本身是 Node.js + Playwright；主要区别是路径写法不同，例如 Windows 路径通常类似 `C:\Users\YourName\Desktop\extension`，macOS 路径通常类似 `/Users/yourname/Desktop/extension`。
+如果使用 Homebrew：
 
-## 安装
+```bash
+brew install git node
+```
+
+如果你想改用自己电脑上的 Google Chrome，再安装 Chrome：
+
+```bash
+brew install --cask google-chrome
+```
+
+检查版本：
+
+```bash
+git --version
+node -v
+```
+
+### 2. 下载项目
+
+```bash
+cd ~/Documents
+mkdir -p project
+cd project
+git clone https://github.com/Yuewei481/Amazon_Web_Script.git
+cd Amazon_Web_Script
+```
+
+### 3. 安装依赖
 
 ```bash
 npm install
 npx playwright install chromium
 ```
 
-复制配置文件：
+### 4. 准备卖家精灵扩展
+
+请自行下载卖家精灵 Chrome 扩展并解压。解压后的目录里必须能看到 `manifest.json` 文件。
+
+例如：
+
+```text
+/Users/你的用户名/Desktop/sellersprite-extension/manifest.json
+```
+
+`.env` 里填写的是扩展文件夹路径，不是 `manifest.json` 文件本身。
+
+### 5. 配置 `.env`
 
 ```bash
 cp .env.example .env
+nano .env
 ```
 
-Windows PowerShell 可以使用：
-
-```powershell
-Copy-Item .env.example .env
-```
-
-## 配置
-
-在 `.env` 中填写配置：
+Mac 示例：
 
 ```env
-SELLER_SPRITE_USERNAME=
-SELLER_SPRITE_PASSWORD=
-SELLER_SPRITE_EXTENSION_PATH=
-SEARCH_QUERY=pop up greeting card
+SELLER_SPRITE_USERNAME="你的卖家精灵账号"
+SELLER_SPRITE_PASSWORD="你的卖家精灵密码"
+SELLER_SPRITE_EXTENSION_PATH="/Users/你的用户名/Desktop/sellersprite-extension"
+SEARCH_QUERY="pop up greeting card"
 MIN_CHILD_MONTHLY_SALES=1000
 AMAZON_COUNTRY=US
 AMAZON_ZIP=10001
 AMAZON_LOGIN_ATTEMPTS=2
 OUTPUT_ROOT=outputs
-TEMPLATE_PATH=/path/to/选品表格-模板.xlsx
+TEMPLATE_PATH="/Users/你的用户名/Desktop/选品表格-模板.xlsx"
 USER_DATA_DIR=browser-profile
 HEADLESS=false
 ```
+
+## 二、Windows 安装
+
+### 1. 安装基础软件
+
+Windows 需要先安装：
+
+- Git for Windows
+- Node.js 18 或更高版本
+- Google Chrome，可选；默认使用 Playwright 自带的 Chromium
+- 卖家精灵 Chrome 扩展
+
+### 2. 打开 Git Bash 或 PowerShell
+
+本项目可以直接用 `npm` 命令运行。Windows 推荐使用 Git Bash；如果你更熟悉 PowerShell，也可以使用 PowerShell。
+
+### 3. 下载项目
+
+例如放在 `D:\Amazon_Web_Script`：
+
+```bash
+cd /d
+git clone https://github.com/Yuewei481/Amazon_Web_Script.git
+cd Amazon_Web_Script
+```
+
+如果放在 Documents：
+
+```bash
+cd ~/Documents
+git clone https://github.com/Yuewei481/Amazon_Web_Script.git
+cd Amazon_Web_Script
+```
+
+### 4. 安装依赖
+
+```bash
+npm install
+npx playwright install chromium
+```
+
+### 5. 准备卖家精灵扩展
+
+请自行下载卖家精灵 Chrome 扩展并解压。解压后的目录里必须能看到 `manifest.json` 文件。
+
+例如：
+
+```text
+C:/Users/你的用户名/Desktop/sellersprite-extension/manifest.json
+```
+
+`.env` 里填写的是扩展文件夹路径，不是 `manifest.json` 文件本身。
+
+### 6. 配置 `.env`
+
+Git Bash：
+
+```bash
+cp .env.example .env
+notepad .env
+```
+
+PowerShell：
+
+```powershell
+Copy-Item .env.example .env
+notepad .env
+```
+
+Windows 示例：
+
+```env
+SELLER_SPRITE_USERNAME="你的卖家精灵账号"
+SELLER_SPRITE_PASSWORD="你的卖家精灵密码"
+SELLER_SPRITE_EXTENSION_PATH="C:/Users/你的用户名/Desktop/sellersprite-extension"
+SEARCH_QUERY="pop up greeting card"
+MIN_CHILD_MONTHLY_SALES=1000
+AMAZON_COUNTRY=US
+AMAZON_ZIP=10001
+AMAZON_LOGIN_ATTEMPTS=2
+OUTPUT_ROOT=outputs
+TEMPLATE_PATH="C:/Users/你的用户名/Desktop/选品表格-模板.xlsx"
+USER_DATA_DIR=browser-profile
+HEADLESS=false
+```
+
+## 三、配置 `.env`
+
+`.env` 用来保存本机运行配置和卖家精灵账号信息，不应该提交到 GitHub。
+
+主要配置说明：
+
+- `SELLER_SPRITE_USERNAME`：卖家精灵账号。
+- `SELLER_SPRITE_PASSWORD`：卖家精灵密码。
+- `SELLER_SPRITE_EXTENSION_PATH`：卖家精灵扩展的本地路径。目录里必须包含 `manifest.json`。
+- `SEARCH_QUERY`：Amazon 搜索关键词，默认是 `pop up greeting card`。
+- `MIN_CHILD_MONTHLY_SALES`：最低近 30 天子体销量，默认是 `1000`。
+- `AMAZON_COUNTRY`：Amazon 站点国家，默认是 `US`。
+- `AMAZON_ZIP`：Amazon 邮政编码，默认是 `10001`。
+- `OUTPUT_ROOT`：输出结果根目录，默认是 `outputs`。
+- `TEMPLATE_PATH`：Excel 模板路径。
+- `USER_DATA_DIR`：浏览器用户数据目录，默认是 `browser-profile`。
+- `HEADLESS`：是否无头运行。调试时建议使用 `false`。
 
 `OUTPUT_ROOT=outputs` 表示脚本输出结果的根目录。脚本一每次运行都会在这个目录下创建一个新的结果文件夹，用来保存 Excel、图片和日志。
 
 `SELLER_SPRITE_EXTENSION_PATH` 表示卖家精灵扩展的本地路径。这里需要填写已经解压后的 Chrome 扩展目录，并且这个目录里面必须能看到 `manifest.json` 文件。
 
-`.env` 不应该提交到 GitHub，因为里面会包含账号、密码和本机路径。
+## 四、运行脚本
 
-## 使用
+下面的路径请换成你本机项目的绝对路径。
 
-生成新的选品表格：
+### Mac 运行脚本一
 
 ```bash
+cd /Users/你的用户名/Documents/project/Amazon_Web_Script
 npm start
 ```
 
-追加新增商品到已有表格：
+脚本一会生成完整选品表格。
 
-```bash
-npm run append-new -- --input /path/to/已有选品表格.xlsx
+默认输出位置：
+
+```text
+outputs/pop-up-greeting-card-YYYY-MM-DD-HHMM/选品表格-pop-up-greeting-card-YYYY-MM-DD.xlsx
 ```
 
-如果 Amazon 或卖家精灵出现验证码、人工确认、同步登录等页面，需要在脚本打开的浏览器里手动完成。完成后脚本会继续执行。
+### Windows 运行脚本一
 
-## 测试
+Git Bash 中可以使用：
 
 ```bash
-npm run check
-npm test
+cd /d/Amazon_Web_Script
+npm start
 ```
 
-## 不要上传的内容
+或者：
+
+```bash
+cd /c/Users/你的用户名/Documents/Amazon_Web_Script
+npm start
+```
+
+### Mac 运行脚本二
+
+```bash
+cd /Users/你的用户名/Documents/project/Amazon_Web_Script
+npm run append-new -- --input "/Users/你的用户名/Desktop/已有选品表格.xlsx"
+```
+
+### Windows 运行脚本二
+
+```bash
+cd /d/Amazon_Web_Script
+npm run append-new -- --input "C:/Users/你的用户名/Desktop/已有选品表格.xlsx"
+```
+
+脚本二不会生成新的最终表格，而是直接修改你输入的原有表格：
+
+- 已存在的商品 ID：跳过
+- 今日新增商品 ID：采集完整信息并追加到表格底部
+- 今日消失的商品 ID：不删除，继续保留
+
+## 五、修改输出位置
+
+默认情况下，脚本一会输出到项目文件夹里的：
+
+```text
+outputs/
+```
+
+### Mac 输出目录示例
+
+在 `.env` 里修改：
+
+```env
+OUTPUT_ROOT="/Users/你的用户名/Desktop/amazon-outputs"
+```
+
+### Windows 输出目录示例
+
+在 `.env` 里修改：
+
+```env
+OUTPUT_ROOT="C:/Users/你的用户名/Desktop/amazon-outputs"
+```
+
+脚本一会把完整选品表格、图片和日志输出到这个目录。脚本二的最终结果仍然是直接修改你输入的 Excel 表格本身。
+
+## 六、常见注意事项
+
+- `.env` 中只要值里有空格，就建议使用英文双引号，例如 `SEARCH_QUERY="pop up greeting card"`。
+- Windows 路径推荐使用 `C:/...`，不要混用中文引号。
+- 第一次运行时，Amazon 或卖家精灵可能要求人工登录、验证码、同步网页端账号等操作。请在脚本打开的浏览器里手动完成。
+- 卖家精灵加载速度可能较慢，脚本会等待数据出现后再采集。
+- 如果卖家精灵显示部分字段为 `N/A`，通常是 Amazon 或卖家精灵暂时没有返回对应数据。
+- 如果 Amazon 出现异常页面，可以稍后重试，或者清理 `browser-profile/` 后重新运行。
+- 不要把 `.env`、`outputs/`、`browser-profile/`、`node_modules/`、卖家精灵扩展目录上传到 GitHub。
+
+## 七、不要上传的内容
 
 以下内容已经通过 `.gitignore` 忽略，不建议上传到 GitHub：
 
@@ -107,3 +310,7 @@ npm test
 - `.playwright/`
 
 卖家精灵扩展请由使用者自行下载并在 `.env` 中配置路径。
+
+## 八、Codex 自动化
+
+本项目也可以链接到 Codex 自动化里，让 Codex 每天自动运行脚本来爬取数据。
