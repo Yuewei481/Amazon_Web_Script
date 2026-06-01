@@ -1,6 +1,6 @@
 # Amazon Web Script
 
-这是一个用于 Amazon Greeting Cards 选品的自动化脚本项目。脚本会通过 Playwright 打开浏览器，加载卖家精灵 Chrome 扩展，进入 Amazon Greeting Cards 畅销榜，筛选标题包含 `pop up` 且近 30 天子体月销量大于等于 1000 的商品，并把商品信息、ASIN、卖家精灵数据和参考图片写入 Excel 表格。
+这是一个在 Amazon 上根据 Greeting Cards 选品的自动化脚本项目。脚本会通过 Playwright 打开浏览器，加载卖家精灵 Chrome 扩展，进入 Amazon Greeting Cards 畅销榜，筛选标题包含 `pop up` 且近 30 天子体月销量大于等于 1000 的商品，并把商品信息、ASIN、卖家精灵数据和参考图片写入 Excel 表格。
 
 ## 脚本功能
 
