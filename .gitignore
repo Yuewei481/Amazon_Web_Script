@@ -1,0 +1,10 @@
+node_modules/
+.env
+outputs/
+browser-profile/
+backups/
+extensions/downloads/
+extensions/sellersprite-extension/
+.playwright/
+*.log
+.DS_Store
