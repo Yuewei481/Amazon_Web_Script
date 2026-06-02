@@ -24,7 +24,19 @@ test('validateConfigObject accepts complete config', () => {
 });
 
 test('validateConfigObject rejects missing required values', () => {
-  assert.throws(() => validateConfigObject({}, { checkExtensionPath: false }), /AMAZON_EMAIL/);
+  assert.throws(() => validateConfigObject({}, { checkExtensionPath: false }), /SELLER_SPRITE_USERNAME/);
+});
+
+test('validateConfigObject allows missing Amazon credentials for manual login', () => {
+  const config = validateConfigObject({
+    SELLER_SPRITE_USERNAME: 'sprite@example.com',
+    SELLER_SPRITE_PASSWORD: 'secret',
+    SELLER_SPRITE_EXTENSION_PATH: '/tmp/ext',
+  }, { checkExtensionPath: false });
+
+  assert.equal(config.amazonEmail, '');
+  assert.equal(config.amazonPassword, '');
+  assert.equal(config.skipAmazonLogin, false);
 });
 
 test('validateConfigObject allows missing Amazon credentials when Amazon login is skipped', () => {

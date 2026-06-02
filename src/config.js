@@ -13,8 +13,7 @@ const REQUIRED = [
 export function validateConfigObject(env, options = {}) {
   const checkExtensionPath = options.checkExtensionPath ?? true;
   const skipAmazonLogin = parseBoolean(env.SKIP_AMAZON_LOGIN);
-  const required = skipAmazonLogin ? REQUIRED : ['AMAZON_EMAIL', 'AMAZON_PASSWORD', ...REQUIRED];
-  const missing = required.filter((key) => !String(env[key] || '').trim());
+  const missing = REQUIRED.filter((key) => !String(env[key] || '').trim());
   if (missing.length) {
     throw new Error(`Missing required config: ${missing.join(', ')}`);
   }
