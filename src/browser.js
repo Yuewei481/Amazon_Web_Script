@@ -25,8 +25,8 @@ export async function launchBrowser(config, logger) {
 
   await installAmazonCartProtection(context, logger, cartProtectionState);
   await installAmazonPageCartGuards(context, logger);
-  await closeRestoredPages(context, logger);
-  const page = await context.newPage();
+  const page = await getStartupPage(context, logger);
+  await closeExtraRestoredPages(context, page, logger);
   await makeBrowserFullscreen(page, logger);
   const sellerSpriteExtensionId = await waitForSellerSpriteExtension(context, logger);
   return {
@@ -79,12 +79,22 @@ async function clearChromiumSessionRestoreFiles(userDataDir, logger) {
   logger.info('Cleared Chromium session restore files before launch', { removed });
 }
 
-async function closeRestoredPages(context, logger) {
+async function getStartupPage(context, logger) {
+  const pages = context.pages();
+  if (pages.length) {
+    logger.info('Reusing initial Chromium page for automation', { restoredPages: pages.length });
+    return pages[0];
+  }
+  return context.newPage();
+}
+
+async function closeExtraRestoredPages(context, keepPage, logger) {
   let closed = 0;
   for (const page of context.pages()) {
+    if (page === keepPage) continue;
     await page.close().then(() => { closed += 1; }).catch(() => {});
   }
-  if (closed) logger.info('Closed restored browser pages before starting automation', { closed });
+  if (closed) logger.info('Closed extra restored browser pages before starting automation', { closed });
 }
 
 async function waitForSellerSpriteExtension(context, logger) {
