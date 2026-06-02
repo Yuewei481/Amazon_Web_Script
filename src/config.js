@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 dotenv.config();
 
@@ -53,7 +54,7 @@ export function validateConfigObject(env, options = {}) {
     amazonCountry: env.AMAZON_COUNTRY || 'US',
     amazonZip: env.AMAZON_ZIP || '10001',
     outputRoot: env.OUTPUT_ROOT || 'outputs',
-    templatePath: env.TEMPLATE_PATH ? path.resolve(env.TEMPLATE_PATH) : defaultTemplatePath(),
+    templatePath: defaultTemplatePath(),
     userDataDir: env.USER_DATA_DIR || 'browser-profile',
     amazonLoginAttempts,
     headless: String(env.HEADLESS || 'false').toLowerCase() === 'true',
@@ -70,8 +71,9 @@ export function loadConfig() {
 }
 
 function defaultTemplatePath() {
-  const desktopTemplatePath = '/Users/yueweizhou/Desktop/选品表格-模板.xlsx';
-  return fs.existsSync(desktopTemplatePath) ? desktopTemplatePath : null;
+  const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+  const bundledTemplatePath = path.join(projectRoot, 'templates', '选品表格-模板.xlsx');
+  return fs.existsSync(bundledTemplatePath) ? bundledTemplatePath : null;
 }
 
 function parseBoolean(value) {

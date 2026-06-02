@@ -94,7 +94,6 @@ AMAZON_COUNTRY=US
 AMAZON_ZIP=10001
 AMAZON_LOGIN_ATTEMPTS=2
 OUTPUT_ROOT=outputs
-TEMPLATE_PATH="/Users/你的用户名/Desktop/选品表格-模板.xlsx"
 USER_DATA_DIR=browser-profile
 HEADLESS=false
 ```
@@ -179,12 +178,13 @@ AMAZON_COUNTRY=US
 AMAZON_ZIP=10001
 AMAZON_LOGIN_ATTEMPTS=2
 OUTPUT_ROOT=outputs
-TEMPLATE_PATH="C:/Users/你的用户名/Desktop/选品表格-模板.xlsx"
 USER_DATA_DIR=browser-profile
 HEADLESS=false
 ```
 
 ## 三、配置 `.env`
+
+`.env` 用来保存本机运行配置和卖家精灵账号信息，不应该提交到 GitHub。
 
 主要配置说明：
 
@@ -196,9 +196,14 @@ HEADLESS=false
 - `AMAZON_COUNTRY`：Amazon 站点国家，默认是 `US`。
 - `AMAZON_ZIP`：Amazon 邮政编码，默认是 `10001`。
 - `OUTPUT_ROOT`：输出结果根目录，默认是 `outputs`。
-- `TEMPLATE_PATH`：Excel 模板路径。
-- `USER_DATA_DIR`：浏览器用户数据目录，用于保存这个自动化浏览器的登录状态、Cookie、缓存、扩展状态等
-- `HEADLESS`：是否隐藏浏览器窗口运行。调试时建议使用 `false`。
+- `USER_DATA_DIR`：浏览器用户数据目录，默认是 `browser-profile`。
+- `HEADLESS`：是否无头运行。调试时建议使用 `false`。
+
+`OUTPUT_ROOT=outputs` 表示脚本输出结果的根目录。脚本一每次运行都会在这个目录下创建一个新的结果文件夹，用来保存 Excel、图片和日志。
+
+`SELLER_SPRITE_EXTENSION_PATH` 表示卖家精灵扩展的本地路径。这里需要填写已经解压后的 Chrome 扩展目录，并且这个目录里面必须能看到 `manifest.json` 文件。
+
+Excel 模板已经包含在项目的 `templates/选品表格-模板.xlsx` 中，不需要用户在 `.env` 里单独填写模板路径。
 
 ## 四、运行脚本
 
@@ -289,7 +294,22 @@ OUTPUT_ROOT="C:/Users/你的用户名/Desktop/amazon-outputs"
 - 卖家精灵加载速度可能较慢，脚本会等待数据出现后再采集。
 - 如果卖家精灵显示部分字段为 `N/A`，通常是 Amazon 或卖家精灵暂时没有返回对应数据。
 - 如果 Amazon 出现异常页面，可以稍后重试，或者清理 `browser-profile/` 后重新运行。
+- 不要把 `.env`、`outputs/`、`browser-profile/`、`node_modules/`、卖家精灵扩展目录上传到 GitHub。
 
-## 七、Codex 自动化
+## 七、不要上传的内容
+
+以下内容已经通过 `.gitignore` 忽略，不建议上传到 GitHub：
+
+- `.env`
+- `node_modules/`
+- `outputs/`
+- `browser-profile/`
+- `backups/`
+- `extensions/sellersprite-extension/`
+- `.playwright/`
+
+卖家精灵扩展请由使用者自行下载并在 `.env` 中配置路径。
+
+## 八、Codex 自动化
 
 本项目也可以链接到 Codex 自动化里，让 Codex 每天自动运行脚本来爬取数据。

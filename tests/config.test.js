@@ -21,6 +21,7 @@ test('validateConfigObject accepts complete config', () => {
   assert.equal(config.minChildMonthlySales, 1000);
   assert.equal(config.amazonZip, '10001');
   assert.equal(config.headless, false);
+  assert.match(config.templatePath || '', /templates/);
 });
 
 test('validateConfigObject rejects missing required values', () => {
