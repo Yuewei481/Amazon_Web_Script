@@ -465,7 +465,6 @@ async function collectProductDetail(page, url, config, output, logger, waitForMa
     listingDate: sellerSprite.listingDate,
     monthlySales,
     price: normalizePrice(priceText),
-    theme: await extractProductTheme(page),
     title,
     asin,
     imagePaths,
@@ -742,23 +741,6 @@ async function extractProductTitle(page) {
       .replace(/^Amazon\.com:\s*/i, '')
       .replace(/\s*:\s*[^:]+$/, '')
       .trim();
-  }).catch(() => '');
-}
-
-async function extractProductTheme(page) {
-  return page.evaluate(() => {
-    const clean = (value) => String(value || '').replace(/\s+/g, ' ').trim();
-    const bodyText = clean(document.body?.innerText || '');
-    const styleMatch = bodyText.match(/\bStyle\s*:\s*([^\\n]+?)(?:\s{2,}|商品重量|商品尺寸|包装重量|包装尺寸|上架时间|$)/i);
-    if (styleMatch) return clean(styleMatch[1]);
-
-    const rows = Array.from(document.querySelectorAll('#productDetails_techSpec_section_1 tr, #productDetails_detailBullets_sections1 tr, tr'));
-    for (const row of rows) {
-      const cells = Array.from(row.querySelectorAll('th, td')).map((cell) => clean(cell.innerText || cell.textContent));
-      if (cells.length >= 2 && /^Style$/i.test(cells[0])) return cells[1];
-    }
-
-    return '';
   }).catch(() => '');
 }
 

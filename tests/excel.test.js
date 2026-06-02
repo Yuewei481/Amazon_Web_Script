@@ -5,8 +5,9 @@ import path from 'node:path';
 import test from 'node:test';
 import { appendProductsToWorkbook, buildWorkbook, EXCEL_COLUMNS, readExistingProductIds } from '../src/excel.js';
 
-test('EXCEL_COLUMNS excludes 日销 and keeps 商品ID', () => {
+test('EXCEL_COLUMNS excludes 日销 and 主题, and keeps 商品ID', () => {
   assert.equal(EXCEL_COLUMNS.includes('日销'), false);
+  assert.equal(EXCEL_COLUMNS.includes('主题'), false);
   assert.equal(EXCEL_COLUMNS.includes('商品ID'), true);
   assert.deepEqual(EXCEL_COLUMNS.slice(0, 6), ['上架时间', '参考样品图', '月销', '售价', '标题', '商品ID']);
 });
@@ -28,15 +29,14 @@ test('buildWorkbook creates 贺卡 worksheet with expected headers', async () =>
   assert.equal(ws.getCell('F2').value, 'B0D9GS9CMS');
 });
 
-test('buildWorkbook can use the new template shape', async () => {
-  const templatePath = '/Users/yueweizhou/Desktop/选品表格-模板.xlsx';
+test('buildWorkbook can use bundled template shape without 日销 or 主题', async () => {
+  const templatePath = path.resolve('templates/选品表格-模板.xlsx');
   if (!fs.existsSync(templatePath)) return;
   const workbook = await buildWorkbook([
     {
       listingDate: '2024-07-24',
       monthlySales: 2000,
       price: 9.99,
-      theme: 'Birthday Card',
       title: 'Pop Up Greeting Card',
       asin: 'B0D9GS9CMS',
       imagePaths: [],
@@ -45,13 +45,12 @@ test('buildWorkbook can use the new template shape', async () => {
   const ws = workbook.getWorksheet('贺卡');
   if (ws) {
     assert.equal(ws.getCell('A1').value, '上架时间');
-    assert.equal(ws.getCell('C1').value, '日销');
-    assert.equal(ws.getCell('H1').value, '商品ID');
-    assert.equal(ws.getCell('I1').value, '竞品内容图片');
-    assert.equal(ws.getCell('D2').value, 2000);
-    assert.equal(ws.getCell('F2').value, 'Birthday Card');
-    assert.equal(ws.getCell('G2').value, 'Pop Up Greeting Card');
-    assert.equal(ws.getCell('H2').value, 'B0D9GS9CMS');
+    assert.equal(ws.getCell('C1').value, '月销');
+    assert.equal(ws.getCell('F1').value, '商品ID');
+    assert.equal(ws.getCell('G1').value, '竞品内容图片');
+    assert.equal(ws.getCell('C2').value, 2000);
+    assert.equal(ws.getCell('E2').value, 'Pop Up Greeting Card');
+    assert.equal(ws.getCell('F2').value, 'B0D9GS9CMS');
   }
 });
 

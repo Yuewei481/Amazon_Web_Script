@@ -13,7 +13,7 @@ export const EXCEL_COLUMNS = [
 
 const IMAGE_COLUMN_WIDTH = 57.14285714285715;
 const TEMPLATE_SHEET_NAME = '贺卡';
-const TEMPLATE_HEADERS = ['上架时间', '参考样品图', '日销', '月销', '售价', '主题', '标题', '商品ID', '竞品内容图片'];
+const TEMPLATE_HEADERS = ['上架时间', '参考样品图', '月销', '售价', '标题', '商品ID', '竞品内容图片'];
 
 export async function buildWorkbook(products, config = {}) {
   if (config.templatePath && fs.existsSync(config.templatePath)) {
@@ -95,10 +95,8 @@ export async function appendProductsToWorkbook(workbookPath, products) {
   for (const product of products) {
     const row = ws.getRow(rowNumber);
     setIfColumn(row, headerMap, '上架时间', product.listingDate || '');
-    setIfColumn(row, headerMap, '日销', '');
     setIfColumn(row, headerMap, '月销', product.monthlySales ?? '');
     setIfColumn(row, headerMap, '售价', product.price ?? '');
-    setIfColumn(row, headerMap, '主题', product.theme || '');
     setIfColumn(row, headerMap, '标题', product.title || '');
     setIfColumn(row, headerMap, '商品ID', product.asin || '');
     row.height = 300;
@@ -126,21 +124,19 @@ async function buildWorkbookFromTemplate(products, templatePath) {
   ws.columns.forEach((column, index) => {
     column.key = ws.getCell(1, index + 1).value || `column_${index + 1}`;
   });
-  ws.autoFilter = `A1:I1`;
+  ws.autoFilter = `A1:G1`;
 
   let rowNumber = 2;
   for (const product of products) {
     const row = ws.getRow(rowNumber);
     row.getCell(1).value = product.listingDate || '';
-    row.getCell(3).value = '';
-    row.getCell(4).value = product.monthlySales ?? '';
-    row.getCell(5).value = product.price ?? '';
-    row.getCell(6).value = product.theme || '';
-    row.getCell(7).value = product.title || '';
-    row.getCell(8).value = product.asin || '';
+    row.getCell(3).value = product.monthlySales ?? '';
+    row.getCell(4).value = product.price ?? '';
+    row.getCell(5).value = product.title || '';
+    row.getCell(6).value = product.asin || '';
     row.height = 300;
     row.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-    await addImagesToColumns(workbook, ws, row.number, product.imagePaths || [], [2, ...Array.from({ length: 24 }, (_, index) => index + 9)]);
+    await addImagesToColumns(workbook, ws, row.number, product.imagePaths || [], [2, ...Array.from({ length: 24 }, (_, index) => index + 7)]);
     row.commit();
     rowNumber += 1;
   }
