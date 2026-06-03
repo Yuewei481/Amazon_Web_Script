@@ -50,6 +50,7 @@ export function validateConfigObject(env, options = {}) {
     sellerSpritePassword: env.SELLER_SPRITE_PASSWORD,
     sellerSpriteExtensionPath: extensionPath,
     searchQuery: env.SEARCH_QUERY || 'pop up greeting card',
+    categoryName: env.CATEGORY_NAME || 'Greeting Cards',
     minChildMonthlySales: minSales,
     amazonCountry: env.AMAZON_COUNTRY || 'US',
     amazonZip: env.AMAZON_ZIP || '10001',

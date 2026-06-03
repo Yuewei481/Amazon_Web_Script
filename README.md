@@ -89,6 +89,7 @@ SELLER_SPRITE_USERNAME="你的卖家精灵账号"
 SELLER_SPRITE_PASSWORD="你的卖家精灵密码"
 SELLER_SPRITE_EXTENSION_PATH="/Users/你的用户名/Desktop/sellersprite-extension"
 SEARCH_QUERY="pop up greeting card"
+CATEGORY_NAME="Greeting Cards"
 MIN_CHILD_MONTHLY_SALES=1000
 AMAZON_COUNTRY=US
 AMAZON_ZIP=10001
@@ -173,6 +174,7 @@ SELLER_SPRITE_USERNAME="你的卖家精灵账号"
 SELLER_SPRITE_PASSWORD="你的卖家精灵密码"
 SELLER_SPRITE_EXTENSION_PATH="C:/Users/你的用户名/Desktop/sellersprite-extension"
 SEARCH_QUERY="pop up greeting card"
+CATEGORY_NAME="Greeting Cards"
 MIN_CHILD_MONTHLY_SALES=1000
 AMAZON_COUNTRY=US
 AMAZON_ZIP=10001
@@ -192,6 +194,7 @@ HEADLESS=false
 - `SELLER_SPRITE_PASSWORD`：卖家精灵密码。
 - `SELLER_SPRITE_EXTENSION_PATH`：卖家精灵扩展的本地路径。目录里必须包含 `manifest.json`。
 - `SEARCH_QUERY`：Amazon 搜索关键词，默认是 `pop up greeting card`。
+- `CATEGORY_NAME`：要进入的 Amazon Best Sellers 分类名，默认是 `Greeting Cards`。这个名称需要和卖家精灵/亚马逊页面上显示的分类文字一致。
 - `MIN_CHILD_MONTHLY_SALES`：最低近 30 天子体销量，默认是 `1000`。
 - `AMAZON_COUNTRY`：Amazon 站点国家，默认是 `US`。
 - `AMAZON_ZIP`：Amazon 邮政编码，默认是 `10001`。

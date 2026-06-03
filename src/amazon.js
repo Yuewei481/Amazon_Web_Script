@@ -110,14 +110,14 @@ export async function searchAndOpenGreetingCards(page, config, logger) {
   await waitForSellerSpriteManualSearchSync(page, logger);
 
   await dismissSellerSpriteOverlays(page, logger);
-  const clickedPage = await clickSellerSpriteGreetingCardsRank(page, logger);
+  const clickedPage = await clickSellerSpriteGreetingCardsRank(page, config, logger);
   if (clickedPage) {
     await actionDelay(clickedPage);
     await dismissSellerSpriteOverlays(clickedPage, logger);
     try {
-      await verifyGreetingCardsBestSellerPage(clickedPage, logger);
+      await verifyGreetingCardsBestSellerPage(clickedPage, config, logger);
       await closeExtraPages(clickedPage, logger);
-      logger.info('Opened Greeting Cards best sellers category by SellerSprite rank click');
+      logger.info('Opened best sellers category by SellerSprite rank click', { categoryName: config.categoryName });
       return clickedPage;
     } catch (error) {
       logger.warn('SellerSprite Greeting Cards click did not open a verified best seller page', {
@@ -128,22 +128,24 @@ export async function searchAndOpenGreetingCards(page, config, logger) {
   }
 
   for (let i = 0; i < 4; i += 1) {
-    const greetingCardsRankUrl = await findSellerSpriteGreetingCardsRankUrl(page);
+    const greetingCardsRankUrl = await findSellerSpriteGreetingCardsRankUrl(page, config);
     if (greetingCardsRankUrl) {
-      await gotoAmazonPageToleratingSlowLoad(page, greetingCardsRankUrl, logger, 'SellerSprite Greeting Cards rank URL');
+      await gotoAmazonPageToleratingSlowLoad(page, greetingCardsRankUrl, logger, `SellerSprite ${config.categoryName} rank URL`);
       await actionDelay(page);
       await dismissSellerSpriteOverlays(page, logger);
-      await verifyGreetingCardsBestSellerPage(page, logger);
+      await verifyGreetingCardsBestSellerPage(page, config, logger);
       await closeExtraPages(page, logger);
-      logger.info('Opened Greeting Cards best sellers category');
+      logger.info('Opened best sellers category', { categoryName: config.categoryName });
       return page;
     }
     await page.evaluate(() => window.scrollBy(0, 900)).catch(() => {});
     await actionDelay(page);
   }
 
-  logger.warn('Could not find SellerSprite Greeting Cards category link in search results; trying Amazon Best Seller category URL fallback');
-  await openGreetingCardsBestSellerFallback(page, logger);
+  logger.warn('Could not find SellerSprite category link in search results; trying Amazon Best Seller category URL fallback', {
+    categoryName: config.categoryName,
+  });
+  await openGreetingCardsBestSellerFallback(page, config, logger);
   await closeExtraPages(page, logger);
   return page;
 }
@@ -155,7 +157,8 @@ async function waitForSellerSpriteManualSearchSync(page, logger) {
   await page.waitForTimeout(waitMs);
 }
 
-export async function verifyGreetingCardsBestSellerPage(page, logger) {
+export async function verifyGreetingCardsBestSellerPage(page, config, logger) {
+  const categoryName = getCategoryName(config);
   const result = await page.evaluate(() => {
     const clean = (value) => String(value || '').replace(/\s+/g, ' ').trim();
     const bodyText = clean(document.body?.innerText);
@@ -172,34 +175,43 @@ export async function verifyGreetingCardsBestSellerPage(page, logger) {
       title: document.title,
       headings,
       hasAmazonBestSellers: /Amazon Best Sellers/i.test(bodyText),
-      hasGreetingCardsHeading: headings.some((heading) => /Best Sellers in Greeting Cards/i.test(heading)),
+      bodyText,
       sampleCount: sampleCountMatch ? Number.parseInt(sampleCountMatch[1], 10) : null,
       visibleRankCount: new Set(visibleRanks).size,
     };
   });
+  result.hasCategoryHeading = result.headings.some((heading) => {
+    const pattern = new RegExp(`Best Sellers in\\s+${escapeRegExp(categoryName)}`, 'i');
+    return pattern.test(heading);
+  });
+  delete result.bodyText;
 
-  logger.info('Greeting Cards best seller page verification', result);
-  if (!result.hasAmazonBestSellers || !result.hasGreetingCardsHeading) {
-    throw new Error(`Opened page is not Amazon Best Sellers in Greeting Cards: ${result.url}`);
+  logger.info('Best seller page verification', { ...result, categoryName });
+  if (!result.hasAmazonBestSellers || !result.hasCategoryHeading) {
+    throw new Error(`Opened page is not Amazon Best Sellers in ${categoryName}: ${result.url}`);
   }
 
   return result;
 }
 
-async function findSellerSpriteGreetingCardsRankUrl(page) {
-  return page.evaluate(() => {
+async function findSellerSpriteGreetingCardsRankUrl(page, config) {
+  const categoryName = getCategoryName(config);
+  return page.evaluate((targetCategoryName) => {
     const clean = (value) => String(value || '').replace(/\s+/g, ' ').trim();
+    const sameCategory = (value) => clean(value).toLowerCase() === targetCategoryName.toLowerCase();
+    const escapedCategory = targetCategoryName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const categoryRankPattern = new RegExp(`#\\s*\\d{1,6}\\s+in\\s+${escapedCategory}`, 'i');
     const anchors = Array.from(document.querySelectorAll('a[href]'));
     const bestSellerLink = anchors.find((anchor) => {
       const text = clean(anchor.innerText || anchor.textContent);
       const href = anchor.href || '';
-      return /^Greeting Cards$/i.test(text) && (/\/zgbs\//i.test(href) || /Best-Sellers/i.test(href));
+      return sameCategory(text) && (/\/zgbs\//i.test(href) || /Best-Sellers/i.test(href));
     });
     if (bestSellerLink) return bestSellerLink.href;
 
     const sellerSpriteRankLink = anchors.find((anchor) => {
       const text = clean(anchor.innerText || anchor.textContent);
-      if (!/^Greeting Cards$/i.test(text)) return false;
+      if (!sameCategory(text)) return false;
       const cardText = clean(anchor.closest('[data-component-type="s-search-result"], .sg-col-inner, .a-section')?.innerText);
       return /ASIN:|自然位|近30天销量|卖家精灵|#\s*\d{1,6}/i.test(cardText);
     });
@@ -207,17 +219,20 @@ async function findSellerSpriteGreetingCardsRankUrl(page) {
 
     const textBundleMatch = anchors.find((anchor) => {
       const text = clean(anchor.innerText || anchor.textContent);
-      return /#\s*\d{1,6}\s+in\s+Greeting Cards/i.test(text);
+      return categoryRankPattern.test(text);
     });
     return textBundleMatch?.href || null;
-  }).catch(() => null);
+  }, categoryName).catch(() => null);
 }
 
-async function clickSellerSpriteGreetingCardsRank(page, logger) {
+async function clickSellerSpriteGreetingCardsRank(page, config, logger) {
+  const categoryName = getCategoryName(config);
+  const exactCategoryPattern = new RegExp(`^${escapeRegExp(categoryName)}$`, 'i');
+  const categoryRankPattern = new RegExp(`#\\s*\\d{1,6}\\s+in\\s+${escapeRegExp(categoryName)}`, 'i');
   const targets = [
-    page.locator('.bsr-list-item').filter({ hasText: /#\s*\d{1,6}\s+in\s+Greeting Cards/i }).locator('a, span').filter({ hasText: /^Greeting Cards$/i }).first(),
-    page.locator('p').filter({ hasText: /#\s*\d{1,6}\s+in\s+Greeting Cards/i }).locator('a, span').filter({ hasText: /^Greeting Cards$/i }).first(),
-    page.locator('span').filter({ hasText: /^Greeting Cards$/i }).first(),
+    page.locator('.bsr-list-item').filter({ hasText: categoryRankPattern }).locator('a, span').filter({ hasText: exactCategoryPattern }).first(),
+    page.locator('p').filter({ hasText: categoryRankPattern }).locator('a, span').filter({ hasText: exactCategoryPattern }).first(),
+    page.locator('span').filter({ hasText: exactCategoryPattern }).first(),
   ];
 
   for (const target of targets) {
@@ -235,41 +250,43 @@ async function clickSellerSpriteGreetingCardsRank(page, logger) {
     if (popup) {
       await popup.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(() => {});
       await popup.bringToFront().catch(() => {});
-      logger.info('Clicked SellerSprite Greeting Cards rank element and switched to new tab', {
+      logger.info('Clicked SellerSprite category rank element and switched to new tab', {
+        categoryName,
         beforeUrl,
         afterUrl: popup.url(),
       });
       return popup;
     }
     const changed = page.url() !== beforeUrl;
-    logger.info('Clicked SellerSprite Greeting Cards rank element', { changed, beforeUrl, afterUrl: page.url() });
+    logger.info('Clicked SellerSprite category rank element', { categoryName, changed, beforeUrl, afterUrl: page.url() });
     return page;
   }
 
   return null;
 }
 
-async function openGreetingCardsBestSellerFallback(page, logger) {
+async function openGreetingCardsBestSellerFallback(page, config, logger) {
+  const categoryName = getCategoryName(config);
   const candidates = [
     'https://www.amazon.com/gp/bestsellers/office-products/723463011?language=en_US',
     'https://www.amazon.com/Best-Sellers-Office-Products-Greeting-Cards/zgbs/office-products/723463011?language=en_US',
   ];
 
   for (const url of candidates) {
-    logger.info('Opening Greeting Cards best seller fallback URL', { url });
-    await gotoAmazonPageToleratingSlowLoad(page, url, logger, 'Greeting Cards best seller fallback URL');
+    logger.info('Opening best seller fallback URL', { url, categoryName });
+    await gotoAmazonPageToleratingSlowLoad(page, url, logger, `${categoryName} best seller fallback URL`);
     await actionDelay(page);
     await dismissSellerSpriteOverlays(page, logger);
     try {
-      await verifyGreetingCardsBestSellerPage(page, logger);
-      logger.info('Opened Greeting Cards best sellers category by fallback URL');
+      await verifyGreetingCardsBestSellerPage(page, config, logger);
+      logger.info('Opened best sellers category by fallback URL', { categoryName });
       return;
     } catch (error) {
-      logger.warn('Greeting Cards fallback URL did not verify', { url, error: error.message });
+      logger.warn('Best seller fallback URL did not verify', { url, categoryName, error: error.message });
     }
   }
 
-  throw new Error('Could not open Amazon Best Sellers in Greeting Cards by SellerSprite link or fallback URL');
+  throw new Error(`Could not open Amazon Best Sellers in ${categoryName} by SellerSprite link or fallback URL`);
 }
 
 async function gotoAmazonPageToleratingSlowLoad(page, url, logger, label) {
@@ -309,6 +326,14 @@ async function clickGreetingCardsBrowseNode(page, logger) {
   }
   logger.warn('Greeting Cards browse node not found on fallback page');
   return false;
+}
+
+function getCategoryName(config) {
+  return String(config?.categoryName || 'Greeting Cards').trim() || 'Greeting Cards';
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 export async function collectTop100Products(page, config, output, logger, waitForManualVerification) {

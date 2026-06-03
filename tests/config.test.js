@@ -10,6 +10,7 @@ test('validateConfigObject accepts complete config', () => {
     SELLER_SPRITE_PASSWORD: 'secret',
     SELLER_SPRITE_EXTENSION_PATH: '/tmp/ext',
     SEARCH_QUERY: 'pop up greeting card',
+    CATEGORY_NAME: 'Greeting Cards',
     MIN_CHILD_MONTHLY_SALES: '1000',
     AMAZON_COUNTRY: 'US',
     AMAZON_ZIP: '10001',
@@ -18,6 +19,7 @@ test('validateConfigObject accepts complete config', () => {
   }, { checkExtensionPath: false });
 
   assert.equal(config.searchQuery, 'pop up greeting card');
+  assert.equal(config.categoryName, 'Greeting Cards');
   assert.equal(config.minChildMonthlySales, 1000);
   assert.equal(config.amazonZip, '10001');
   assert.equal(config.headless, false);
@@ -38,6 +40,7 @@ test('validateConfigObject allows missing Amazon credentials for manual login', 
   assert.equal(config.amazonEmail, '');
   assert.equal(config.amazonPassword, '');
   assert.equal(config.skipAmazonLogin, false);
+  assert.equal(config.categoryName, 'Greeting Cards');
 });
 
 test('validateConfigObject allows missing Amazon credentials when Amazon login is skipped', () => {
