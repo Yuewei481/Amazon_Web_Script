@@ -8,6 +8,7 @@ import { appendProductsToWorkbook, readExistingProductIds } from './excel.js';
 import { createLogger } from './logger.js';
 import { waitForManualVerification } from './manualCheck.js';
 import { createRunOutput } from './output.js';
+import { acquireRunLock } from './runLock.js';
 import { loginSellerSprite } from './sellerSprite.js';
 
 async function main() {
@@ -15,6 +16,7 @@ async function main() {
   let output;
   let logger;
   let browser;
+  let releaseRunLock;
   let runCompleted = false;
 
   try {
@@ -25,6 +27,7 @@ async function main() {
       ...loadConfig(),
       existingProductIds,
     };
+    releaseRunLock = await acquireRunLock(config, 'append-new');
     output = await createRunOutput(config);
     logger = createLogger(output.logPath);
     logger.info('Starting append-new-products automation', {
@@ -44,6 +47,7 @@ async function main() {
       logger.info('Prerequisite complete: Amazon login step has run');
       await ensureZipCode(browser.page, config, logger);
       logger.info('Prerequisite complete: Amazon ZIP code step has run');
+      await waitForSellerSpriteManualSync(browser.page, logger);
     }
     await loginSellerSprite(browser.context, config, logger, waitForManualVerification);
     logger.info('Prerequisite complete: SellerSprite login step has run');
@@ -79,6 +83,7 @@ async function main() {
     } else {
       await browser?.context?.close().catch(() => {});
     }
+    await releaseRunLock?.();
     logger?.close?.();
   }
 }
@@ -113,3 +118,10 @@ async function saveFailureDebugArtifacts(page, output, logger) {
 }
 
 main();
+
+async function waitForSellerSpriteManualSync(page, logger) {
+  const waitMs = 2 * 60 * 1000;
+  logger.info('Waiting for manual SellerSprite sync after Amazon login', { waitMs });
+  console.log('请在浏览器里确认 Amazon 已登录，并手动完成卖家精灵同步。脚本会等待 2 分钟后继续运行。');
+  await page.waitForTimeout(waitMs);
+}
