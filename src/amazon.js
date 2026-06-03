@@ -522,9 +522,9 @@ async function ensureProductImageAreaReady(page, asin, logger) {
 }
 
 async function openProductDetailPage(page, url, logger) {
-  for (let attempt = 1; attempt <= 2; attempt += 1) {
+  for (let attempt = 1; attempt <= 4; attempt += 1) {
     try {
-      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
       return true;
     } catch (error) {
       logger.warn('Product page load timeout; stopping load and checking partial page', {
@@ -538,7 +538,7 @@ async function openProductDetailPage(page, url, logger) {
         logger.info('Using partially loaded product detail page after timeout', { url, attempt });
         return true;
       }
-      if (attempt < 2) {
+      if (attempt < 4) {
         await actionDelay(page, 3000);
       }
     }
