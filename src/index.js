@@ -75,7 +75,7 @@ async function main() {
       await browser?.context?.close().catch(() => {});
     }
     await releaseRunLock?.();
-    logger?.close?.();
+    await logger?.close?.();
   }
 }
 

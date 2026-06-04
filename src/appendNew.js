@@ -1,4 +1,6 @@
 import fs from 'node:fs';
+import fsp from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { collectTop100Products, ensureZipCode, loginAmazon, searchAndOpenGreetingCards } from './amazon.js';
 import { launchBrowser } from './browser.js';
@@ -7,7 +9,6 @@ import { loadConfig } from './config.js';
 import { appendProductsToWorkbook, readExistingProductIds } from './excel.js';
 import { createLogger } from './logger.js';
 import { waitForManualVerification } from './manualCheck.js';
-import { createRunOutput } from './output.js';
 import { acquireRunLock } from './runLock.js';
 import { loginSellerSprite } from './sellerSprite.js';
 
@@ -17,6 +18,7 @@ async function main() {
   let logger;
   let browser;
   let releaseRunLock;
+  let tempOutputDir;
   let runCompleted = false;
 
   try {
@@ -28,14 +30,15 @@ async function main() {
       existingProductIds,
     };
     releaseRunLock = await acquireRunLock(config, 'append-new');
-    output = await createRunOutput(config);
+    output = await createAppendTempOutput();
+    tempOutputDir = output.runDir;
     logger = createLogger(output.logPath);
     logger.info('Starting append-new-products automation', {
       inputWorkbookPath,
       existingProductCount: existingProductIds.size,
       searchQuery: config.searchQuery,
       minChildMonthlySales: config.minChildMonthlySales,
-      outputDir: output.runDir,
+      tempDir: output.runDir,
     });
 
     browser = await launchBrowser(config, logger);
@@ -83,8 +86,24 @@ async function main() {
       await browser?.context?.close().catch(() => {});
     }
     await releaseRunLock?.();
-    logger?.close?.();
+    await logger?.close?.();
+    if (tempOutputDir) {
+      await fsp.rm(tempOutputDir, { recursive: true, force: true }).catch(() => {});
+    }
   }
+}
+
+async function createAppendTempOutput() {
+  const runDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'amazon-append-new-'));
+  const imagesDir = path.join(runDir, 'images');
+  await fsp.mkdir(imagesDir, { recursive: true });
+  return {
+    runDir,
+    imagesDir,
+    imageHashes: new Set(),
+    logPath: path.join(runDir, 'run.log'),
+    workbookPath: null,
+  };
 }
 
 function parseInputWorkbookPath(args) {
