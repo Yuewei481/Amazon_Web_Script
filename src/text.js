@@ -1,5 +1,28 @@
+export const DEFAULT_TITLE_KEYWORDS = ['pop up', 'popup', 'pop-up'];
+
+export function titleMatchesKeywords(title, keywords = DEFAULT_TITLE_KEYWORDS) {
+  const normalizedTitle = normalizeKeywordText(title);
+  const keywordList = Array.isArray(keywords) ? keywords : parseKeywordList(keywords);
+  if (!keywordList.length) return true;
+  return keywordList.some((keyword) => normalizedTitle.includes(normalizeKeywordText(keyword)));
+}
+
 export function titleMatchesPopUp(title) {
-  return /\bpop[\s-]?up\b/i.test(String(title || ''));
+  return titleMatchesKeywords(title, DEFAULT_TITLE_KEYWORDS);
+}
+
+export function parseKeywordList(value) {
+  return String(value || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function normalizeKeywordText(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[\s-]+/g, ' ')
+    .trim();
 }
 
 export function parseSalesNumber(value) {

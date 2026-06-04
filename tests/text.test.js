@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   asinFromUrl,
   normalizePrice,
+  titleMatchesKeywords,
   parseSalesNumber,
   titleMatchesPopUp,
 } from '../src/text.js';
@@ -13,6 +14,13 @@ test('titleMatchesPopUp accepts common pop up variants', () => {
   assert.equal(titleMatchesPopUp('Popup Birthday Card'), true);
   assert.equal(titleMatchesPopUp('10 Inch Life Sized Forever Flower Bouquet 3D Pop Up Birthday Gift Card'), true);
   assert.equal(titleMatchesPopUp('Floral Greeting Card'), false);
+});
+
+test('titleMatchesKeywords accepts configurable title keywords', () => {
+  assert.equal(titleMatchesKeywords('Baby Teether Toys for 0-6 Months', ['teether', 'sensory']), true);
+  assert.equal(titleMatchesKeywords('Baby Teething Toy', ['teether']), false);
+  assert.equal(titleMatchesKeywords('3D pop-up card', ['pop up']), true);
+  assert.equal(titleMatchesKeywords('Any title is accepted when keywords are empty', []), true);
 });
 
 test('parseSalesNumber handles commas and plus signs', () => {

@@ -11,6 +11,7 @@ test('validateConfigObject accepts complete config', () => {
     SELLER_SPRITE_EXTENSION_PATH: '/tmp/ext',
     SEARCH_QUERY: 'pop up greeting card',
     CATEGORY_NAME: 'Greeting Cards',
+    TITLE_KEYWORDS: 'pop up,popup,pop-up',
     MIN_CHILD_MONTHLY_SALES: '1000',
     AMAZON_COUNTRY: 'US',
     AMAZON_ZIP: '10001',
@@ -20,6 +21,7 @@ test('validateConfigObject accepts complete config', () => {
 
   assert.equal(config.searchQuery, 'pop up greeting card');
   assert.equal(config.categoryName, 'Greeting Cards');
+  assert.deepEqual(config.titleKeywords, ['pop up', 'popup', 'pop-up']);
   assert.equal(config.minChildMonthlySales, 1000);
   assert.equal(config.amazonZip, '10001');
   assert.equal(config.headless, false);
@@ -41,6 +43,23 @@ test('validateConfigObject allows missing Amazon credentials for manual login', 
   assert.equal(config.amazonPassword, '');
   assert.equal(config.skipAmazonLogin, false);
   assert.equal(config.categoryName, 'Greeting Cards');
+  assert.deepEqual(config.titleKeywords, ['pop up', 'popup', 'pop-up']);
+});
+
+test('validateConfigObject supports configurable and empty title keywords', () => {
+  const base = {
+    SELLER_SPRITE_USERNAME: 'sprite@example.com',
+    SELLER_SPRITE_PASSWORD: 'secret',
+    SELLER_SPRITE_EXTENSION_PATH: '/tmp/ext',
+  };
+  assert.deepEqual(validateConfigObject({
+    ...base,
+    TITLE_KEYWORDS: 'baby,toy,teether',
+  }, { checkExtensionPath: false }).titleKeywords, ['baby', 'toy', 'teether']);
+  assert.deepEqual(validateConfigObject({
+    ...base,
+    TITLE_KEYWORDS: '',
+  }, { checkExtensionPath: false }).titleKeywords, []);
 });
 
 test('validateConfigObject allows missing Amazon credentials when Amazon login is skipped', () => {

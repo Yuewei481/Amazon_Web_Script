@@ -90,6 +90,7 @@ SELLER_SPRITE_PASSWORD="你的卖家精灵密码"
 SELLER_SPRITE_EXTENSION_PATH="/Users/你的用户名/Desktop/sellersprite-extension"
 SEARCH_QUERY="pop up greeting card"
 CATEGORY_NAME="Greeting Cards"
+TITLE_KEYWORDS="pop up,popup,pop-up"
 MIN_CHILD_MONTHLY_SALES=1000
 AMAZON_COUNTRY=US
 AMAZON_ZIP=10001
@@ -175,6 +176,7 @@ SELLER_SPRITE_PASSWORD="你的卖家精灵密码"
 SELLER_SPRITE_EXTENSION_PATH="C:/Users/你的用户名/Desktop/sellersprite-extension"
 SEARCH_QUERY="pop up greeting card"
 CATEGORY_NAME="Greeting Cards"
+TITLE_KEYWORDS="pop up,popup,pop-up"
 MIN_CHILD_MONTHLY_SALES=1000
 AMAZON_COUNTRY=US
 AMAZON_ZIP=10001
@@ -195,6 +197,7 @@ HEADLESS=false
 - `SELLER_SPRITE_EXTENSION_PATH`：卖家精灵扩展的本地路径。目录里必须包含 `manifest.json`。
 - `SEARCH_QUERY`：Amazon 搜索关键词，默认是 `pop up greeting card`。
 - `CATEGORY_NAME`：要进入的 Amazon Best Sellers 分类名，默认是 `Greeting Cards`。这个名称需要和卖家精灵/亚马逊页面上显示的分类文字一致。
+- `TITLE_KEYWORDS`：商品标题关键词过滤，多个关键词用英文逗号分隔，默认是 `pop up,popup,pop-up`。商品标题只要包含其中任意一个关键词，就会继续采集；如果写成 `TITLE_KEYWORDS=`，则不限制标题关键词。
 - `MIN_CHILD_MONTHLY_SALES`：最低近 30 天子体销量，默认是 `1000`。
 - `AMAZON_COUNTRY`：Amazon 站点国家，默认是 `US`。
 - `AMAZON_ZIP`：Amazon 邮政编码，默认是 `10001`。
@@ -293,6 +296,7 @@ OUTPUT_ROOT="C:/Users/你的用户名/Desktop/amazon-outputs"
 ## 六、常见注意事项
 
 - `.env` 中只要值里有空格，就建议使用英文双引号，例如 `SEARCH_QUERY="pop up greeting card"`。
+- 如果你修改了搜索词和分类，也要按需要修改 `TITLE_KEYWORDS`。例如采集 baby toys 时，可以设置为 `TITLE_KEYWORDS="baby,toy,teether"`；如果不想按标题过滤，可以设置为 `TITLE_KEYWORDS=`。
 - Windows 路径推荐使用 `C:/...`，不要混用中文引号。
 - 第一次运行时，Amazon 或卖家精灵可能要求人工登录、验证码、同步网页端账号等操作。请在脚本打开的浏览器里手动完成。
 - 脚本搜索 `pop up greeting card` 后，会自动等待 2 分钟，用来给你在搜索结果页手动同步卖家精灵。

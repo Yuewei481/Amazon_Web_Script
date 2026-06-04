@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { collectProductImages } from './images.js';
 import { ensureSellerSpriteAmazonPanelLoggedIn, extractSellerSpriteProductData } from './sellerSprite.js';
-import { asinFromUrl, normalizePrice, parseSalesNumber, titleMatchesPopUp } from './text.js';
+import { asinFromUrl, normalizePrice, parseSalesNumber, titleMatchesKeywords } from './text.js';
 import { actionDelay, sellerSpriteLoadDelay } from './timing.js';
 
 export async function loginAmazon(page, config, logger, waitForManualVerification) {
@@ -455,21 +455,27 @@ async function collectProductDetail(page, url, config, output, logger, waitForMa
   }
 
   const title = await extractProductTitle(page);
-  if (!titleMatchesPopUp(title)) {
-    logger.info('Skipping product because title does not match pop up filter', { asin, title });
+  if (!titleMatchesKeywords(title, config.titleKeywords)) {
+    logger.info('Skipping product because title does not match title keyword filter', {
+      asin,
+      title,
+      titleKeywords: config.titleKeywords,
+    });
     return null;
   }
   if (config.stopAtFirstPopupProduct) {
-    logger.warn('Stopping at first product whose title matches pop up filter for manual inspection', {
+    logger.warn('Stopping at first product whose title matches title keyword filter for manual inspection', {
       asin,
       title,
+      titleKeywords: config.titleKeywords,
       url: page.url(),
     });
     throw new Error('STOP_AT_FIRST_POPUP_PRODUCT reached');
   }
 
-  logger.info('Product title matches pop up filter; waiting for SellerSprite detail data', {
+  logger.info('Product title matches title keyword filter; waiting for SellerSprite detail data', {
     asin,
+    titleKeywords: config.titleKeywords,
     waitMs: 10000,
   });
   await actionDelay(page, 10000);

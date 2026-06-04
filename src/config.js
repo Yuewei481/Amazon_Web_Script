@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { DEFAULT_TITLE_KEYWORDS, parseKeywordList } from './text.js';
 
 dotenv.config();
 
@@ -51,6 +52,7 @@ export function validateConfigObject(env, options = {}) {
     sellerSpriteExtensionPath: extensionPath,
     searchQuery: env.SEARCH_QUERY || 'pop up greeting card',
     categoryName: env.CATEGORY_NAME || 'Greeting Cards',
+    titleKeywords: parseTitleKeywords(env.TITLE_KEYWORDS),
     minChildMonthlySales: minSales,
     amazonCountry: env.AMAZON_COUNTRY || 'US',
     amazonZip: env.AMAZON_ZIP || '10001',
@@ -79,4 +81,9 @@ function defaultTemplatePath() {
 
 function parseBoolean(value) {
   return ['1', 'true', 'yes', 'y'].includes(String(value || '').trim().toLowerCase());
+}
+
+function parseTitleKeywords(value) {
+  if (value === undefined) return DEFAULT_TITLE_KEYWORDS;
+  return parseKeywordList(value);
 }
