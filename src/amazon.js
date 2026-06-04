@@ -151,9 +151,9 @@ export async function searchAndOpenGreetingCards(page, config, logger) {
 }
 
 async function waitForSellerSpriteManualSearchSync(page, logger) {
-  const waitMs = 2 * 60 * 1000;
+  const waitMs = 5 * 60 * 1000;
   logger.info('Waiting for manual SellerSprite sync after Amazon search', { waitMs });
-  console.log('请在搜索结果页手动同步卖家精灵。脚本会等待 2 分钟后继续运行。');
+  console.log('请在搜索结果页手动同步卖家精灵。脚本会等待 5 分钟后继续运行。');
   await page.waitForTimeout(waitMs);
 }
 

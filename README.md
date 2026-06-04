@@ -299,7 +299,7 @@ OUTPUT_ROOT="C:/Users/你的用户名/Desktop/amazon-outputs"
 - 如果你修改了搜索词和分类，也要按需要修改 `TITLE_KEYWORDS`。例如采集 baby toys 时，可以设置为 `TITLE_KEYWORDS="baby,toy,teether"`；如果不想按标题过滤，可以设置为 `TITLE_KEYWORDS=`。
 - Windows 路径推荐使用 `C:/...`，不要混用中文引号。
 - 第一次运行时，Amazon 或卖家精灵可能要求人工登录、验证码、同步网页端账号等操作。请在脚本打开的浏览器里手动完成。
-- 脚本搜索 `pop up greeting card` 后，会自动等待 2 分钟，用来给你在搜索结果页手动同步卖家精灵。
+- 脚本搜索完成后，会自动等待 5 分钟，用来给你在搜索结果页手动同步卖家精灵。
 - 卖家精灵加载速度可能较慢，脚本会等待数据出现后再采集。
 - 如果卖家精灵显示部分字段为 `N/A`，通常是 Amazon 或卖家精灵暂时没有返回对应数据。
 - 如果 Amazon 出现异常页面，可以稍后重试，或者清理 `browser-profile/` 后重新运行。
