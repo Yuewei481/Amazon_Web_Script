@@ -1,6 +1,9 @@
 import { makeBrowserFullscreen } from './browser.js';
 import { actionDelay } from './timing.js';
 
+const CHILD_MONTHLY_SALES_WAIT_MS = 30000;
+const CHILD_MONTHLY_SALES_MAX_REFRESHES = 2;
+
 export async function loginSellerSprite(context, config, logger, waitForManualVerification) {
   logger.info('Opening SellerSprite website login');
   const page = await context.newPage();
@@ -204,10 +207,10 @@ export async function extractSellerSpriteProductData(page, logger) {
   let bodyText = '';
   let childSalesMatch = null;
   let listingDateMatch = null;
-  const maxRefreshes = 4;
+  const maxRefreshes = CHILD_MONTHLY_SALES_MAX_REFRESHES;
 
   for (let refreshCount = 0; refreshCount <= maxRefreshes; refreshCount += 1) {
-    const deadline = Date.now() + 20000;
+    const deadline = Date.now() + CHILD_MONTHLY_SALES_WAIT_MS;
     while (Date.now() < deadline) {
       bodyText = await page.locator('body').innerText({ timeout: 10000 }).catch(() => '');
       childSalesMatch = findChildMonthlySales(bodyText, logger);
@@ -219,7 +222,7 @@ export async function extractSellerSpriteProductData(page, logger) {
     }
     if (childSalesMatch) break;
     if (refreshCount < maxRefreshes) {
-      logger.info('SellerSprite child monthly sales not visible after 20 seconds; refreshing product page', {
+      logger.info('SellerSprite child monthly sales not visible after 30 seconds; refreshing product page', {
         refreshCount: refreshCount + 1,
         maxRefreshes,
       });

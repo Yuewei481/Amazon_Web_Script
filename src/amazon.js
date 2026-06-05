@@ -4,6 +4,10 @@ import { ensureSellerSpriteAmazonPanelLoggedIn, extractSellerSpriteProductData }
 import { asinFromUrl, normalizePrice, parseSalesNumber, titleMatchesKeywords } from './text.js';
 import { actionDelay, sellerSpriteLoadDelay } from './timing.js';
 
+const PRODUCT_DETAIL_NAVIGATION_TIMEOUT_MS = 200000;
+const PRODUCT_DETAIL_NAVIGATION_MAX_ATTEMPTS = 3;
+const SELLERSPRITE_DETAIL_INITIAL_WAIT_MS = 30000;
+
 export async function loginAmazon(page, config, logger, waitForManualVerification) {
   logger.info('Opening Amazon US');
   await setAmazonLocale(page);
@@ -362,48 +366,115 @@ export async function collectTop100Products(page, config, output, logger, waitFo
 }
 
 export async function discoverTop100ProductUrls(page, logger) {
-  const urls = new Set();
+  const urls = [];
+  const seenAsins = new Set();
   const visitedPages = new Set();
 
-  for (let pageNumber = 1; pageNumber <= 4 && urls.size < 100; pageNumber += 1) {
+  for (let pageNumber = 1; pageNumber <= 2; pageNumber += 1) {
     visitedPages.add(page.url());
-    await collectBestSellerPageUrls(page, urls);
+    const pageUrls = await collectBestSellerPageUrls(page, logger, pageNumber);
+    for (const url of pageUrls) {
+      const asin = asinFromUrl(url);
+      if (!asin || seenAsins.has(asin)) continue;
+      seenAsins.add(asin);
+      urls.push(url);
+    }
     logger.info('Discovered candidate URLs on best seller page', {
       pageNumber,
-      totalCount: urls.size,
+      pageCount: pageUrls.length,
+      totalCount: urls.length,
       url: page.url(),
     });
 
-    if (urls.size >= 100) break;
+    if (pageUrls.length < 50) {
+      logger.warn('Best seller page did not expose 50 product URLs after waiting; continuing with collected URLs', {
+        pageNumber,
+        pageCount: pageUrls.length,
+        expectedPageCount: 50,
+      });
+    }
+    if (pageNumber === 2) break;
     if (!await goToNextBestSellerPage(page, visitedPages, logger)) break;
   }
 
-  logger.info('Discovered Top 100 candidate URLs', { count: urls.size });
-  return Array.from(urls);
-}
-
-async function collectBestSellerPageUrls(page, urls) {
-  for (let i = 0; i < 28 && urls.size < 100; i += 1) {
-    await addVisibleBestSellerUrls(page, urls);
-    await page.evaluate(() => window.scrollBy(0, Math.max(900, window.innerHeight * 0.8))).catch(() => {});
-    await actionDelay(page, 1200);
+  if (urls.length < 100) {
+    logger.warn('Best Sellers two-page collection found fewer than 100 unique product URLs after waiting', {
+      count: urls.length,
+      expectedCount: 100,
+    });
   }
-  await addVisibleBestSellerUrls(page, urls);
+
+  logger.info('Discovered Top 100 candidate URLs', { count: urls.length });
+  return urls.slice(0, 100);
 }
 
-async function addVisibleBestSellerUrls(page, urls) {
+async function collectBestSellerPageUrls(page, logger, pageNumber) {
+  const urls = [];
+  const seenAsins = new Set();
+  const startedAt = Date.now();
+  const maxWaitMs = 5 * 60 * 1000;
+  let round = 0;
+  let lastLoggedCount = 0;
+
+  while (Date.now() - startedAt < maxWaitMs && urls.length < 50) {
+    round += 1;
+    await collectVisibleBestSellerUrls(page, urls, seenAsins, 50);
+    if (urls.length >= 50) break;
+
+    if (urls.length !== lastLoggedCount || round % 12 === 0) {
+      logger.info('Waiting for Best Seller page to expose 50 product URLs', {
+        pageNumber,
+        found: urls.length,
+        expected: 50,
+        elapsedMs: Date.now() - startedAt,
+        url: page.url(),
+      });
+      lastLoggedCount = urls.length;
+    }
+
+    await page.evaluate(() => {
+      const nearBottom = window.innerHeight + window.scrollY >= document.body.scrollHeight - 300;
+      if (nearBottom) window.scrollTo(0, 0);
+      else window.scrollBy(0, Math.max(900, window.innerHeight * 0.85));
+    }).catch(() => {});
+    await actionDelay(page, 5000);
+
+    if (round > 0 && round % 36 === 0 && urls.length < 50) {
+      logger.warn('Best seller page still has fewer than 50 product URLs; reloading and continuing to wait', {
+        pageNumber,
+        found: urls.length,
+        elapsedMs: Date.now() - startedAt,
+        url: page.url(),
+      });
+      await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 }).catch((error) => {
+        logger.warn('Best seller page reload while waiting did not finish cleanly', { pageNumber, error: error.message });
+      });
+      await actionDelay(page, 3000);
+      await page.evaluate(() => window.scrollTo(0, 0)).catch(() => {});
+      await actionDelay(page, 1000);
+    }
+  }
+
+  return urls.slice(0, 50);
+}
+
+async function collectVisibleBestSellerUrls(page, urls, seenAsins, targetCount) {
   const found = await page.$$eval(
     [
       '[id^="p13n-asin-index"] a[href*="/dp/"]',
       '#gridItemRoot a[href*="/dp/"]',
       '.zg-grid-general-faceout a[href*="/dp/"]',
-      'a[href*="zg_bs_g_723463011"][href*="/dp/"]',
+      'a[href*="/dp/"][href*="zg_bs"]',
+      'a[href*="/dp/"][href*="pd_zg"]',
     ].join(', '),
     (links) => links.map((link) => link.href).filter(Boolean)
   );
   for (const url of found) {
     const asin = asinFromUrl(url);
-    if (asin) urls.add(`https://www.amazon.com/dp/${asin}`);
+    if (!asin || seenAsins.has(asin)) continue;
+    seenAsins.add(asin);
+    urls.push(`https://www.amazon.com/dp/${asin}`);
+    if (urls.length >= targetCount) return;
   }
 }
 
@@ -476,9 +547,9 @@ async function collectProductDetail(page, url, config, output, logger, waitForMa
   logger.info('Product title matches title keyword filter; waiting for SellerSprite detail data', {
     asin,
     titleKeywords: config.titleKeywords,
-    waitMs: 10000,
+    waitMs: SELLERSPRITE_DETAIL_INITIAL_WAIT_MS,
   });
-  await actionDelay(page, 10000);
+  await actionDelay(page, SELLERSPRITE_DETAIL_INITIAL_WAIT_MS);
   await dismissSellerSpriteOverlays(page, logger);
   await ensureSellerSpriteAmazonPanelLoggedIn(page, page.context(), config, logger, waitForManualVerification);
 
@@ -553,14 +624,16 @@ async function ensureProductImageAreaReady(page, asin, logger) {
 }
 
 async function openProductDetailPage(page, url, logger) {
-  for (let attempt = 1; attempt <= 4; attempt += 1) {
+  for (let attempt = 1; attempt <= PRODUCT_DETAIL_NAVIGATION_MAX_ATTEMPTS; attempt += 1) {
     try {
-      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: PRODUCT_DETAIL_NAVIGATION_TIMEOUT_MS });
       return true;
     } catch (error) {
       logger.warn('Product page load timeout; stopping load and checking partial page', {
         url,
         attempt,
+        maxAttempts: PRODUCT_DETAIL_NAVIGATION_MAX_ATTEMPTS,
+        timeoutMs: PRODUCT_DETAIL_NAVIGATION_TIMEOUT_MS,
         error: error.message,
       });
       await page.evaluate(() => window.stop()).catch(() => {});
@@ -569,8 +642,13 @@ async function openProductDetailPage(page, url, logger) {
         logger.info('Using partially loaded product detail page after timeout', { url, attempt });
         return true;
       }
-      if (attempt < 4) {
-        await actionDelay(page, 3000);
+      if (attempt < PRODUCT_DETAIL_NAVIGATION_MAX_ATTEMPTS) {
+        logger.info('Retrying product detail page after navigation failure', {
+          url,
+          nextAttempt: attempt + 1,
+          maxAttempts: PRODUCT_DETAIL_NAVIGATION_MAX_ATTEMPTS,
+        });
+        await actionDelay(page, 5000);
       }
     }
   }
