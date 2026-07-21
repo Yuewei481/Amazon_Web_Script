@@ -115,9 +115,11 @@ Windows 需要先安装：
 
 本项目可以直接用 `npm` 命令运行。Windows 推荐使用 Git Bash；如果你更熟悉 PowerShell，也可以使用 PowerShell。
 
+注意：Git Bash 和 PowerShell 的 `cd` 路径写法不一样。下面每一步都分别给出两种写法，请按你打开的终端选择对应命令。
+
 ### 3. 下载项目
 
-例如放在 `D:\Amazon_Web_Script`：
+Git Bash，例如放在 `D:\Amazon_Web_Script`：
 
 ```bash
 cd /d
@@ -125,12 +127,28 @@ git clone https://github.com/Yuewei481/Amazon_Web_Script.git
 cd Amazon_Web_Script
 ```
 
-如果放在 Documents：
+Git Bash，如果放在 Documents：
 
 ```bash
 cd ~/Documents
 git clone https://github.com/Yuewei481/Amazon_Web_Script.git
 cd Amazon_Web_Script
+```
+
+PowerShell，例如放在 `D:\Amazon_Web_Script`：
+
+```powershell
+Set-Location D:\
+git clone https://github.com/Yuewei481/Amazon_Web_Script.git
+Set-Location .\Amazon_Web_Script
+```
+
+PowerShell，如果放在 Documents：
+
+```powershell
+Set-Location "$HOME\Documents"
+git clone https://github.com/Yuewei481/Amazon_Web_Script.git
+Set-Location .\Amazon_Web_Script
 ```
 
 ### 4. 安装依赖
@@ -232,17 +250,31 @@ outputs/pop-up-greeting-card-YYYY-MM-DD-HHMM/选品表格-pop-up-greeting-card-Y
 
 ### Windows 运行脚本一
 
-Git Bash 中可以使用：
+Git Bash：
 
 ```bash
 cd /d/Amazon_Web_Script
 npm start
 ```
 
-或者：
+Git Bash，如果项目在 Documents：
 
 ```bash
 cd /c/Users/你的用户名/Documents/Amazon_Web_Script
+npm start
+```
+
+PowerShell：
+
+```powershell
+Set-Location D:\Amazon_Web_Script
+npm start
+```
+
+PowerShell，如果项目在 Documents：
+
+```powershell
+Set-Location "$HOME\Documents\Amazon_Web_Script"
 npm start
 ```
 
@@ -255,8 +287,17 @@ npm run append-new -- --input "/Users/你的用户名/Desktop/已有选品表格
 
 ### Windows 运行脚本二
 
+Git Bash：
+
 ```bash
 cd /d/Amazon_Web_Script
+npm run append-new -- --input "C:/Users/你的用户名/Desktop/已有选品表格.xlsx"
+```
+
+PowerShell：
+
+```powershell
+Set-Location D:\Amazon_Web_Script
 npm run append-new -- --input "C:/Users/你的用户名/Desktop/已有选品表格.xlsx"
 ```
 
@@ -303,7 +344,7 @@ OUTPUT_ROOT="C:/Users/你的用户名/Desktop/amazon-outputs"
 - 卖家精灵加载速度可能较慢，脚本会等待数据出现后再采集。
 - 如果卖家精灵显示部分字段为 `N/A`，通常是 Amazon 或卖家精灵暂时没有返回对应数据。
 - 如果 Amazon 出现异常页面，可以稍后重试，或者清理 `browser-profile/` 后重新运行。
-- 如果脚本提示已有运行正在进行，说明另一个 `npm start` 或 `append-new` 还没结束。请先关闭另一个终端；如果确认旧脚本已经停止，可以删除 `browser-profile/.run.lock` 后再运行。
+- 如果脚本提示已有运行正在进行，说明另一个 `npm start` 或 `append-new` 还没结束。请先关闭另一个终端；如果确认旧脚本已经停止，可以删除 `browser-profile/.run.lock` 后再运行。Git Bash 使用 `rm -f browser-profile/.run.lock`；PowerShell 使用 `Remove-Item .\browser-profile\.run.lock -ErrorAction SilentlyContinue`。
 - 不要把 `.env`、`outputs/`、`browser-profile/`、`node_modules/`、卖家精灵扩展目录上传到 GitHub。
 
 ## 七、不要上传的内容
