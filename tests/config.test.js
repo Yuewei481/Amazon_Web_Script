@@ -11,6 +11,7 @@ test('validateConfigObject accepts complete config', () => {
     SELLER_SPRITE_EXTENSION_PATH: '/tmp/ext',
     SEARCH_QUERY: 'pop up greeting card',
     CATEGORY_NAME: 'Greeting Cards',
+    SUBCATEGORY_NAME: 'Birthday Cards',
     TITLE_KEYWORDS: 'pop up,popup,pop-up',
     MIN_CHILD_MONTHLY_SALES: '1000',
     AMAZON_COUNTRY: 'US',
@@ -21,6 +22,7 @@ test('validateConfigObject accepts complete config', () => {
 
   assert.equal(config.searchQuery, 'pop up greeting card');
   assert.equal(config.categoryName, 'Greeting Cards');
+  assert.equal(config.subcategoryName, 'Birthday Cards');
   assert.deepEqual(config.titleKeywords, ['pop up', 'popup', 'pop-up']);
   assert.equal(config.minChildMonthlySales, 1000);
   assert.equal(config.amazonZip, '10001');
@@ -43,6 +45,7 @@ test('validateConfigObject allows missing Amazon credentials for manual login', 
   assert.equal(config.amazonPassword, '');
   assert.equal(config.skipAmazonLogin, false);
   assert.equal(config.categoryName, 'Greeting Cards');
+  assert.equal(config.subcategoryName, '');
   assert.deepEqual(config.titleKeywords, ['pop up', 'popup', 'pop-up']);
 });
 

@@ -7,6 +7,7 @@ import { actionDelay, sellerSpriteLoadDelay } from './timing.js';
 const PRODUCT_DETAIL_NAVIGATION_TIMEOUT_MS = 200000;
 const PRODUCT_DETAIL_NAVIGATION_MAX_ATTEMPTS = 3;
 const SELLERSPRITE_DETAIL_INITIAL_WAIT_MS = 30000;
+const BEST_SELLER_VERIFY_TIMEOUT_MS = 120000;
 
 export async function loginAmazon(page, config, logger, waitForManualVerification) {
   logger.info('Opening Amazon US');
@@ -119,12 +120,16 @@ export async function searchAndOpenGreetingCards(page, config, logger) {
     await actionDelay(clickedPage);
     await dismissSellerSpriteOverlays(clickedPage, logger);
     try {
-      await verifyGreetingCardsBestSellerPage(clickedPage, config, logger);
+      await prepareBestSellerCategoryPage(clickedPage, config, logger);
       await closeExtraPages(clickedPage, logger);
-      logger.info('Opened best sellers category by SellerSprite rank click', { categoryName: config.categoryName });
+      logger.info('Opened best sellers category by SellerSprite rank click', {
+        categoryName: config.categoryName,
+        subcategoryName: config.subcategoryName || null,
+        activeCategoryName: getActiveBestSellerCategoryName(config),
+      });
       return clickedPage;
     } catch (error) {
-      logger.warn('SellerSprite Greeting Cards click did not open a verified best seller page', {
+      logger.warn('SellerSprite category click did not open a verified best seller page', {
         url: clickedPage.url(),
         error: error.message,
       });
@@ -137,9 +142,13 @@ export async function searchAndOpenGreetingCards(page, config, logger) {
       await gotoAmazonPageToleratingSlowLoad(page, greetingCardsRankUrl, logger, `SellerSprite ${config.categoryName} rank URL`);
       await actionDelay(page);
       await dismissSellerSpriteOverlays(page, logger);
-      await verifyGreetingCardsBestSellerPage(page, config, logger);
+      await prepareBestSellerCategoryPage(page, config, logger);
       await closeExtraPages(page, logger);
-      logger.info('Opened best sellers category', { categoryName: config.categoryName });
+      logger.info('Opened best sellers category', {
+        categoryName: config.categoryName,
+        subcategoryName: config.subcategoryName || null,
+        activeCategoryName: getActiveBestSellerCategoryName(config),
+      });
       return page;
     }
     await page.evaluate(() => window.scrollBy(0, 900)).catch(() => {});
@@ -154,6 +163,17 @@ export async function searchAndOpenGreetingCards(page, config, logger) {
   return page;
 }
 
+async function prepareBestSellerCategoryPage(page, config, logger) {
+  const categoryName = getCategoryName(config);
+  await waitForBestSellerPage(page, categoryName, logger);
+  const subcategoryName = getSubcategoryName(config);
+  if (!subcategoryName) return;
+
+  await clickBestSellerSubcategory(page, subcategoryName, logger);
+  await dismissSellerSpriteOverlays(page, logger);
+  await waitForBestSellerPage(page, subcategoryName, logger);
+}
+
 async function waitForSellerSpriteManualSearchSync(page, logger) {
   const waitMs = 5 * 60 * 1000;
   logger.info('Waiting for manual SellerSprite sync after Amazon search', { waitMs });
@@ -162,7 +182,34 @@ async function waitForSellerSpriteManualSearchSync(page, logger) {
 }
 
 export async function verifyGreetingCardsBestSellerPage(page, config, logger) {
-  const categoryName = getCategoryName(config);
+  return verifyBestSellerPage(page, getActiveBestSellerCategoryName(config), logger);
+}
+
+async function waitForBestSellerPage(page, categoryName, logger) {
+  const startedAt = Date.now();
+  let lastError;
+
+  while (Date.now() - startedAt < BEST_SELLER_VERIFY_TIMEOUT_MS) {
+    try {
+      return await verifyBestSellerPage(page, categoryName, logger);
+    } catch (error) {
+      lastError = error;
+      logger.info('Waiting for Amazon Best Sellers category page to finish loading', {
+        categoryName,
+        elapsedMs: Date.now() - startedAt,
+        url: page.url(),
+        error: error.message,
+      });
+      await dismissSellerSpriteOverlays(page, logger);
+      await page.evaluate(() => window.scrollTo(0, 0)).catch(() => {});
+      await actionDelay(page, 5000);
+    }
+  }
+
+  throw lastError || new Error(`Amazon Best Sellers in ${categoryName} did not verify before timeout`);
+}
+
+async function verifyBestSellerPage(page, categoryName, logger) {
   const result = await page.evaluate(() => {
     const clean = (value) => String(value || '').replace(/\s+/g, ' ').trim();
     const bodyText = clean(document.body?.innerText);
@@ -187,7 +234,7 @@ export async function verifyGreetingCardsBestSellerPage(page, config, logger) {
   result.hasCategoryHeading = result.headings.some((heading) => {
     const pattern = new RegExp(`Best Sellers in\\s+${escapeRegExp(categoryName)}`, 'i');
     return pattern.test(heading);
-  });
+  }) || new RegExp(`Best Sellers in\\s+${escapeRegExp(categoryName)}`, 'i').test(`${result.title} ${result.bodyText}`);
   delete result.bodyText;
 
   logger.info('Best seller page verification', { ...result, categoryName });
@@ -196,6 +243,32 @@ export async function verifyGreetingCardsBestSellerPage(page, config, logger) {
   }
 
   return result;
+}
+
+async function clickBestSellerSubcategory(page, subcategoryName, logger) {
+  const beforeUrl = page.url();
+  const exactSubcategoryPattern = new RegExp(`^${escapeRegExp(subcategoryName)}$`, 'i');
+  const link = page.locator('#zg_browseRoot a, #zg-left-col a, a')
+    .filter({ hasText: exactSubcategoryPattern })
+    .first();
+
+  if (!await link.count().catch(() => 0)) {
+    throw new Error(`Amazon Best Sellers subcategory link not found: ${subcategoryName}`);
+  }
+
+  logger.info('Clicking Amazon Best Sellers subcategory', { subcategoryName, beforeUrl });
+  await link.scrollIntoViewIfNeeded().catch(() => {});
+  await Promise.allSettled([
+    page.waitForLoadState('domcontentloaded', { timeout: 30000 }),
+    page.waitForURL((url) => url.href !== beforeUrl, { timeout: 30000 }),
+    link.click({ timeout: 10000 }),
+  ]);
+  await actionDelay(page, 5000);
+  logger.info('Clicked Amazon Best Sellers subcategory', {
+    subcategoryName,
+    beforeUrl,
+    afterUrl: page.url(),
+  });
 }
 
 async function findSellerSpriteGreetingCardsRankUrl(page, config) {
@@ -334,6 +407,14 @@ async function clickGreetingCardsBrowseNode(page, logger) {
 
 function getCategoryName(config) {
   return String(config?.categoryName || 'Greeting Cards').trim() || 'Greeting Cards';
+}
+
+function getSubcategoryName(config) {
+  return String(config?.subcategoryName || '').trim();
+}
+
+function getActiveBestSellerCategoryName(config) {
+  return getSubcategoryName(config) || getCategoryName(config);
 }
 
 function escapeRegExp(value) {

@@ -52,6 +52,7 @@ export function validateConfigObject(env, options = {}) {
     sellerSpriteExtensionPath: extensionPath,
     searchQuery: env.SEARCH_QUERY || 'pop up greeting card',
     categoryName: env.CATEGORY_NAME || 'Greeting Cards',
+    subcategoryName: String(env.SUBCATEGORY_NAME || '').trim(),
     titleKeywords: parseTitleKeywords(env.TITLE_KEYWORDS),
     minChildMonthlySales: minSales,
     amazonCountry: env.AMAZON_COUNTRY || 'US',

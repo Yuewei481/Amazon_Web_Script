@@ -71,6 +71,7 @@ SELLER_SPRITE_PASSWORD="你的卖家精灵密码"
 SELLER_SPRITE_EXTENSION_PATH="/Users/你的用户名/Desktop/sellersprite-extension"
 SEARCH_QUERY="pop up greeting card"
 CATEGORY_NAME="Greeting Cards"
+SUBCATEGORY_NAME=
 TITLE_KEYWORDS="pop up,popup,pop-up"
 MIN_CHILD_MONTHLY_SALES=1000
 AMAZON_COUNTRY=US
@@ -153,6 +154,7 @@ SELLER_SPRITE_PASSWORD="你的卖家精灵密码"
 SELLER_SPRITE_EXTENSION_PATH="C:/Users/你的用户名/Desktop/sellersprite-extension"
 SEARCH_QUERY="pop up greeting card"
 CATEGORY_NAME="Greeting Cards"
+SUBCATEGORY_NAME=
 TITLE_KEYWORDS="pop up,popup,pop-up"
 MIN_CHILD_MONTHLY_SALES=1000
 AMAZON_COUNTRY=US
@@ -233,6 +235,7 @@ SELLER_SPRITE_PASSWORD="你的卖家精灵密码"
 SELLER_SPRITE_EXTENSION_PATH="C:/Users/你的用户名/Desktop/sellersprite-extension"
 SEARCH_QUERY="pop up greeting card"
 CATEGORY_NAME="Greeting Cards"
+SUBCATEGORY_NAME=
 TITLE_KEYWORDS="pop up,popup,pop-up"
 MIN_CHILD_MONTHLY_SALES=1000
 AMAZON_COUNTRY=US
@@ -251,7 +254,8 @@ HEADLESS=false
 - `SELLER_SPRITE_PASSWORD`：卖家精灵密码，必须填写。
 - `SELLER_SPRITE_EXTENSION_PATH`：卖家精灵扩展文件夹路径，必须填写。
 - `SEARCH_QUERY`：Amazon 搜索词。
-- `CATEGORY_NAME`：搜索后要进入的 Amazon Best Sellers 分类名。
+- `CATEGORY_NAME`：搜索后先进入的 Amazon Best Sellers 分类名，可以是大类，也可以是具体小类。
+- `SUBCATEGORY_NAME`：可选的小类名。如果为空，就直接采集 `CATEGORY_NAME` 对应页面；如果填写，会先进入 `CATEGORY_NAME`，再点击这个小类。
 - `TITLE_KEYWORDS`：标题关键词过滤，多个关键词用英文逗号分隔。
 - `MIN_CHILD_MONTHLY_SALES`：最低近 30 天子体销量。
 - `AMAZON_COUNTRY`：Amazon 站点国家，通常写 `US`。
@@ -265,6 +269,7 @@ HEADLESS=false
 ```env
 SEARCH_QUERY="massage gun"
 CATEGORY_NAME="handheld massagers"
+SUBCATEGORY_NAME=
 TITLE_KEYWORDS="RENPHO,cotsoco"
 MIN_CHILD_MONTHLY_SALES=1000
 ```
@@ -275,6 +280,33 @@ MIN_CHILD_MONTHLY_SALES=1000
 - 进入 `handheld massagers` 这个 Best Sellers 分类。
 - 只记录标题里包含 `RENPHO` 或 `cotsoco` 的商品。
 - 只记录近 30 天子体销量大于等于 `1000` 的商品。
+
+只采集大类时，例如直接采集 Toys & Games 大类：
+
+```env
+SEARCH_QUERY="puzzle"
+CATEGORY_NAME="Toys & Games"
+SUBCATEGORY_NAME=
+TITLE_KEYWORDS="puzzle"
+```
+
+先进入大类、再点击小类时，例如先进入 Toys & Games，再点击 Puzzles：
+
+```env
+SEARCH_QUERY="puzzle"
+CATEGORY_NAME="Toys & Games"
+SUBCATEGORY_NAME="Puzzles"
+TITLE_KEYWORDS="puzzle"
+```
+
+如果一开始就想直接进入卖家精灵给出的 Puzzles 分类，也可以写：
+
+```env
+SEARCH_QUERY="puzzle"
+CATEGORY_NAME="Puzzles"
+SUBCATEGORY_NAME=
+TITLE_KEYWORDS="puzzle"
+```
 
 如果想不限制标题关键词，可以写：
 
