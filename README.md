@@ -82,7 +82,7 @@ USER_DATA_DIR=browser-profile
 HEADLESS=false
 ```
 
-## 三、Windows 安装教程：Git Bash 版本
+## 二、Windows 安装教程：Git Bash 版本
 
 如果你选择 Git Bash，就从这一节开始一直用 Git Bash。不要中途换成 PowerShell。
 
@@ -167,7 +167,7 @@ HEADLESS=false
 
 Windows 路径推荐在 `.env` 里写成 `C:/...`，不要写中文引号。
 
-## 四、Windows 安装教程：PowerShell 版本
+## 三、Windows 安装教程：PowerShell 版本
 
 如果你选择 PowerShell，就从这一节开始一直用 PowerShell。不要中途换成 Git Bash。
 
@@ -246,7 +246,7 @@ USER_DATA_DIR=browser-profile
 HEADLESS=false
 ```
 
-## 五、`.env` 配置说明
+## 四、`.env` 配置说明
 
 常用配置：
 
@@ -314,7 +314,7 @@ TITLE_KEYWORDS="puzzle"
 TITLE_KEYWORDS=
 ```
 
-## 六、使用教程：脚本一，创建新的完整 Excel
+## 五、使用教程：脚本一，创建新的完整 Excel
 
 脚本一适合第一次创建某个搜索词的完整选品表格。
 
@@ -357,7 +357,7 @@ OUTPUT_ROOT=outputs
 
 每次运行会生成一个新的文件夹，里面有 Excel、图片和日志。
 
-## 七、使用教程：脚本二，追加新增商品到已有 Excel
+## 六、使用教程：脚本二，追加新增商品到已有 Excel
 
 脚本二适合第二天继续采集同一个搜索词，并把今天新增商品追加到已有 Excel 底部。
 
@@ -393,7 +393,7 @@ npm run append-new -- --input "C:/Users/你的用户名/Desktop/已有选品表�
 ```
 
 
-## 八、运行过程中需要人工做什么
+## 七、运行过程中需要人工做什么
 
 ### 1. Amazon 登录
 
@@ -426,7 +426,7 @@ npm run append-new -- --input "C:/Users/你的用户名/Desktop/已有选品表�
 
 如果终端回到可以输入命令的状态，说明脚本已经结束。
 
-## 九、常见问题
+## 八、常见问题
 
 ### 1. 提示已有脚本正在运行
 
@@ -509,7 +509,7 @@ SELLER_SPRITE_EXTENSION_PATH=
 
 运行脚本二前，请关闭要写入的 Excel 文件。Excel 打开时可能会锁住文件，导致脚本无法写入。
 
-## 十、不要做的事情
+## 九、不要做的事情
 
 - 不要同时运行两个脚本。
 - 不要在脚本运行时关闭终端。
